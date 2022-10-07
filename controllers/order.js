@@ -1,22 +1,48 @@
-import mongoose from "mongoose";
-import Product from "../models/product.js";
-import User from "../models/user.js";
-import CartItem from "../models/cartItem.js";
 import Order from "../models/order.js";
+import {auth, googleSheetsInstance, sheet_id} from "../middleware/google.js";
 
 export function getAll(req, res) {
-  Order.find({ uid: req.query.uid }).then((resp) => res.status(200).json(resp));
+  Order.find({uid: req.query.uid}).then((resp) => res.status(200).json(resp));
 }
 
-export function addOrder(req, res) {
-  Order.create({
-    uid: req.body.uid,
-    cart: JSON.stringify(req.body.cart),
-    name: req.body.name,
-    email: req.body.email,
-    mobile: req.body.contact,
-    transactionID: req.body.transactionID,
-  }).then(() => {
-    Order.find().then((resp) => res.status(200).json(resp));
-  });
+// user email	user mobile	user name	transaction ID
+export async function addOrder(req, res) {
+  const {uid, cart, name, email, contact, transactionID} = req.body;
+
+  if (!!uid && !!cart && !!email && !!cart && !!name && !!contact && !!transactionID) {
+    // write to google sheet
+    await googleSheetsInstance.spreadsheets.values.append({
+      auth,
+      spreadsheetId: sheet_id,
+      range: "Sheet1!A:E",
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        values: [[email, contact, name, transactionID, getProducts(cart)]],
+      },
+    });
+
+    // save to mongodb
+    Order.create({
+      uid: req.body.uid,
+      cart: JSON.stringify(req.body.cart),
+      name: req.body.name,
+      email: req.body.email,
+      mobile: req.body.contact,
+      transactionID: req.body.transactionID,
+    }).then(() => {
+      Order.find().then((resp) => res.status(200).json(resp));
+    });
+  } else {
+    res.status(400).json({err: "invalid input"});
+  }
+}
+
+function getProducts(cart) {
+  let products = "";
+
+  for (const product of cart) {
+    products += `${product.name}\nSize: ${product.size}\nQty: ${product.quantity}\n\n`;
+  }
+
+  return products.trim();
 }
