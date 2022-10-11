@@ -48,9 +48,7 @@ export function signup(req, res, next) {
 export function signin(req, res, next) {
   const {email, pwd: password} = req.body;
 
-  if (!!email || !!password) {
-    res.status(400).json({error: "Please include all the required fields"});
-  } else {
+  if (!!email && !!password) {
     User.findOne({email})
       .then(async (user) => {
         if (user) {
@@ -76,6 +74,9 @@ export function signin(req, res, next) {
       .catch((err) => {
         next(err);
       });
+  } else {
+    res.status(400).json({error: "Please include all the required fields"});
+    next();
   }
 }
 
