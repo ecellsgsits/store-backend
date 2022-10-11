@@ -48,28 +48,35 @@ export function signup(req, res, next) {
 export function signin(req, res, next) {
   const {email, pwd: password} = req.body;
 
-  User.findOne({email})
-    .then(async (user) => {
-      if (user) {
-        if (await bcrypt.compare(password, user.pwd)) {
-          user = await user.populate("cart");
-          res.json({
-            userId: user._id,
-            token: generateToken(user._id),
-            userEmail: user.email,
-            name: user.name,
-            cart: user.cart,
-            address: user.add,
-          });
+  if (!!email || !!password) {
+    res.status(400).json({error: "Please include all the required fields"});
+  } else {
+    User.findOne({email})
+      .then(async (user) => {
+        if (user) {
+          if (await bcrypt.compare(password, user.pwd)) {
+            user = await user.populate("cart");
+            res.json({
+              userId: user._id,
+              token: generateToken(user._id),
+              userEmail: user.email,
+              name: user.name,
+              cart: user.cart,
+              address: user.add,
+            });
+          } else {
+            res.status(400).json({error: "Invalid password"});
+            next();
+          }
         } else {
-          res.status(400).json({error: "Invalid credentials"});
+          res.status(400).json({error: "User doesn't exist"});
           next();
         }
-      }
-    })
-    .catch((err) => {
-      next(err);
-    });
+      })
+      .catch((err) => {
+        next(err);
+      });
+  }
 }
 
 export function verifyToken(req, res, next) {
