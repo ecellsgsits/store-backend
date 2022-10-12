@@ -5,19 +5,20 @@ export function getAll(req, res) {
   Order.find({uid: req.query.uid}).then((resp) => res.status(200).json(resp));
 }
 
-// user email	user mobile	user name	transaction ID
+// name mob email product txn date
 export async function addOrder(req, res) {
   const {uid, cart, name, email, contact, transactionID} = req.body;
 
   if (!!uid && !!cart && !!email && !!cart && !!name && !!contact && !!transactionID) {
+    const orderDate = new Date().toLocaleDateString();
     // write to google sheet
     await googleSheetsInstance.spreadsheets.values.append({
       auth,
       spreadsheetId: sheet_id,
-      range: "Sheet1!A:E",
+      range: "Sheet1!A:F",
       valueInputOption: "USER_ENTERED",
       resource: {
-        values: [[email, contact, name, transactionID, getProducts(cart)]],
+        values: [[name, contact, email, getProducts(cart), transactionID, orderDate]],
       },
     });
 
