@@ -22,7 +22,7 @@ export async function addOrder(req, res) {
       },
     });
 
-    // save to mongodb
+  //   // save to mongodb
     Order.create({
       uid: req.body.uid,
       cart: JSON.stringify(req.body.cart),
@@ -42,7 +42,7 @@ function getProducts(cart) {
   let products = "";
 
   for (const product of cart) {
-    products += `${product.name}\nSize: ${product.size}\nQty: ${product.quantity}\n\n`;
+    products += `${product.name}\nColor: ${product.color}\nVariant: ${product.variant}\nSize: ${product.size}\nQty: ${product.quantity}\n\n`;
   }
 
   return products.trim();
